@@ -12,20 +12,21 @@
         <div class="row">
             <div class="col-md-6 text-center">
                 <h3>Left</h3>
-                {% if ".mp4" in comparison.media_url_1 %}
-                    <!--video width="400px" loop>
-                        <source src="{{ comparison.media_url_1 }}" type="video/mp4"/>
-                    </video -->
-                    <video width="200px" loop>
-                        <source src="{{ left_data_url }}" type="video/mp4"/>
-                    </video>
+                {% if ".gif" in comparison.media_url_1 %}
+                    <div style="height: 400px; width: 400px"><img src="/static{{ comparison.media_url_1 }}"/></div>
                 {% else %}
-                    <img style="width:400px" src="{{ comparison.media_url_1 }}">
+                    {% if ".mp4" in comparison.media_url_1 %}
+                        <video width="400px" loop muted>
+                            <source src="/static{{ comparison.media_url_1 }}" type="video/mp4"/>
+                        </video>
+                    {% else %}
+                        <img style="width:400px" src="/static{{ comparison.media_url_1 }}">
+                    {% endif %}
                 {% endif %}
 
                 <form style="padding-top:30px"
                       action="/experiments/{{ experiment.name }}/ajax_response" method="post">
-                    {# % csrf_token % #}
+                    {% csrf_token %}
                     <input type="hidden" name="comparison_id" value="{{ comparison.id }}">
                     <input type="hidden" name="response" value="{{ 'left' }}">
                     <input class="btn btn-lg btn-default choice-left" type="submit"
@@ -35,20 +36,21 @@
             </div>
             <div class="col-md-6 text-center">
                 <h3>Right</h3>
-                {% if ".mp4" in comparison.media_url_2 %}
-                    <!-- video width="400px" loop>
-                        <source src="{{ comparison.media_url_2 }}" type="video/mp4"/>
-                    </video -->
-                    <video width="200px" loop>
-                        <source src="{{ right_data_url }}" type="video/mp4"/>
-                    </video>
+                {% if ".gif" in comparison.media_url_2 %}
+                    <div style="height: 400px; width: 400px"><img src="/static{{ comparison.media_url_2 }}"/></div>
                 {% else %}
-                    <img style="width:400px" src="{{ comparison.media_url_2 }}">
+                    {% if ".mp4" in comparison.media_url_2 %}
+                        <video width="400px" loop muted>
+                            <source src="/static{{ comparison.media_url_2 }}" type="video/mp4"/>
+                        </video>
+                    {% else %}
+                        <img style="width:400px" src="/static{{ comparison.media_url_2 }}">
+                    {% endif %}
                 {% endif %}
 
                 <form style="padding-top:30px"
                       action="/experiments/{{ experiment.name }}/ajax_response" method="post">
-                    {# % csrf_token % #}
+                    {% csrf_token %}
                     <input type="hidden" name="comparison_id" value="{{ comparison.id }}">
                     <input type="hidden" name="response" value="{{ 'right' }}">
                     <input class="btn btn-lg btn-default choice-right" type="submit"
@@ -69,7 +71,7 @@
 
                 <form style="padding-top:30px"
                       action="/experiments/{{ experiment.name }}/ajax_response" method="post">
-                    {# % csrf_token % #}
+                    {% csrf_token %}
                     <input type="hidden" name="comparison_id" value="{{ comparison.id }}">
                     <input type="hidden" name="response" value="{{ 'abstain' }}">
                     <input class="btn btn-lg btn-default choice-abstain" type="submit" value="Can't tell">

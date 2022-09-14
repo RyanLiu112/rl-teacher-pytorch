@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from agents.parallel_trpo.parallel_trpo import utils
 
+
 class VF(object):
     coeffs = None
 
@@ -58,6 +59,7 @@ class VF(object):
             with torch.no_grad():
                 ret = self.net(self._features(path)).numpy()
             return np.reshape(ret, (ret.shape[0],))
+
 
 class LinearVF(object):
     coeffs = None

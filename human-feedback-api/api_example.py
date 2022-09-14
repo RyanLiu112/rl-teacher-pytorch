@@ -1,5 +1,6 @@
 from human_feedback_api import Comparison
 
+
 def generate_test():
     # TEST_MEDIA = ['test707470989.png', 'test559628392.png', 'test736369680.png', 'test836374824.png',
     #     'test593516009.png', 'test836986396.png', 'test996736825.png', 'test746178624.png', 'test58579485.png', ]
@@ -17,9 +18,11 @@ def generate_test():
 
             test_comparison.full_clean()
             test_comparison.save()
-            import ipdb; ipdb.set_trace()
+            import ipdb
+            ipdb.set_trace()
 
     print('We now have a total of {} comparisons in the database'.format(Comparison.objects.count()))
+
 
 if __name__ == '__main__':
     Comparison.objects.all().delete()

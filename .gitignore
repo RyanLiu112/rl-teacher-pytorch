@@ -1,0 +1,6 @@
+.idea
+*.pyc
+.DS_Store
+rl_teacher.egg-info/
+human-feedback-api/human_feedback_api.egg-info/
+agents/parallel_trpo/parallel_trpo.egg-info/

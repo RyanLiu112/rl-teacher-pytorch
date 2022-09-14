@@ -5,11 +5,13 @@ from agents.parallel_trpo.parallel_trpo.train import train_parallel_trpo
 
 from rl_teacher.summaries import make_summary_writer
 
+
 class TraditionalRLRewardPredictor():
     """Always returns the true reward provided by the environment."""
 
     def predict_reward(self, path):
         return path["original_rewards"]
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='TRPO')

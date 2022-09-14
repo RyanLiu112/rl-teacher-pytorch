@@ -69,7 +69,6 @@ class TRPO(object):
         kl_firstfixed = utils.gauss_selfKL_firstfixed(avg_action_dist, logstd_action_dist) / batch_size_float
         return surr, kl, ent, kl_firstfixed
 
-
     # the actual parameter values
     def _get_flat_params(self):
         return torch.cat([torch.reshape(v.detach(), (-1,)) for v in self.policy_vars], dim=0)
@@ -80,7 +79,7 @@ class TRPO(object):
         start = 0
         for var in self.policy_vars:
             size = torch.numel(var)
-            var.data.copy_(torch.reshape(theta[start:start+size], var.shape))
+            var.data.copy_(torch.reshape(theta[start:start + size], var.shape))
             var.grad = None
             start += size
 
@@ -124,7 +123,7 @@ class TRPO(object):
             start = 0
             tangents = []
             for var in self.policy_vars:
-                tangents.append(p[start: start+torch.numel(var)].view(var.size()))
+                tangents.append(p[start: start + torch.numel(var)].view(var.size()))
                 start += torch.numel(var)
 
             gvp = [torch.sum(g * t) for (g, t) in zip(grads, tangents)]
@@ -153,7 +152,8 @@ class TRPO(object):
 
         self._set_from_flat(old_theta)
 
-        surrogate_after, kl_after, entropy_after, _ = self.forward(obs_n, action_n, advant_n, avg_action_dist, logstd_action_dist)
+        surrogate_after, kl_after, entropy_after, _ = self.forward(obs_n, action_n, advant_n, avg_action_dist,
+                                                                   logstd_action_dist)
 
         ep_rewards = np.array([path["original_rewards"].sum() for path in paths])
 

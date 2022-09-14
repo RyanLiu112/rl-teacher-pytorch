@@ -1,13 +1,14 @@
 import os
 
 import multiprocess
-from time import time
+from time import perf_counter as time
 
 import numpy as np
 import gym
 
 from agents.parallel_trpo.parallel_trpo.model import TRPO
 from agents.parallel_trpo.parallel_trpo.rollouts import ParallelRollout
+
 
 def print_stats(stats):
     for k, v in stats.items():
@@ -23,6 +24,7 @@ def print_stats(stats):
             v = "{:.4f}".format(v)
 
         print("{:38} {:>12}".format(k + ":", v))
+
 
 def train_parallel_trpo(
         env_id,
@@ -41,7 +43,7 @@ def train_parallel_trpo(
     # Tensorflow is not fork-safe, so we must use spawn instead
     # https://github.com/tensorflow/tensorflow/issues/5448#issuecomment-258934405
     # We use multiprocess rather than multiprocessing because Keras sets a multiprocessing context
-    if not os.environ.get("SET_PARALLEL_TRPO_START_METHOD"): # Use an env variable to prevent double-setting
+    if not os.environ.get("SET_PARALLEL_TRPO_START_METHOD"):  # Use an env variable to prevent double-setting
         multiprocess.set_start_method('spawn')
         os.environ['SET_PARALLEL_TRPO_START_METHOD'] = "1"
 
@@ -77,7 +79,7 @@ def train_parallel_trpo(
         # output stats
         print("-------- Iteration %d ----------" % iteration)
 
-        frames_gathered_per_second = stats["Frames gathered"] / rollout_time
+        frames_gathered_per_second = 0 if rollout_time == 0 else stats["Frames gathered"] / rollout_time
         stats["Frames gathered/second"] = int(frames_gathered_per_second)
 
         stats['Time spent gathering rollouts'] = rollout_time

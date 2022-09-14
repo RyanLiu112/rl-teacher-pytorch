@@ -1,9 +1,11 @@
 import os
 import os.path as osp
 import sys
+sys.path.append('/Users/liurunze/rl-teacher-pytorch')
 import random
 from collections import deque
 from time import time, sleep
+from datetime import datetime
 
 import torch
 import numpy as np
@@ -23,6 +25,7 @@ from rl_teacher.video import SegmentVideoRecorder
 
 CLIP_LENGTH = 1.5
 
+
 class TraditionalRLRewardPredictor(object):
     """Predictor that always returns the true reward provided by the environment."""
 
@@ -35,6 +38,7 @@ class TraditionalRLRewardPredictor(object):
 
     def path_callback(self, path):
         pass
+
 
 class ComparisonRewardPredictor():
     """Predictor that trains a model to predict how much reward is contained in a trajectory segment"""
@@ -55,8 +59,8 @@ class ComparisonRewardPredictor():
         self.obs_shape = env.observation_space.shape
         self.discrete_action_space = not hasattr(env.action_space, "shape")
         self.act_shape = (env.action_space.n,) if self.discrete_action_space else env.action_space.shape
-        # self.graph = self._build_model()
 
+        # A vanilla multi-layer perceptron maps a (state, action) pair to a reward (Q-value)
         self.mlp = FullyConnectedMLP(self.obs_shape, self.act_shape)
         self.optim = torch.optim.Adam(self.mlp.parameters)
 
@@ -87,20 +91,6 @@ class ComparisonRewardPredictor():
         of which segment is better. We then learn the weights for our model by comparing
         these labels with an authority (either a human or synthetic labeler).
         """
-        # Set up observation placeholders
-        # self.segment_obs_placeholder = tf.placeholder(
-        #     dtype=tf.float32, shape=(None, None) + self.obs_shape, name="obs_placeholder")
-        # self.segment_alt_obs_placeholder = tf.placeholder(
-        #     dtype=tf.float32, shape=(None, None) + self.obs_shape, name="alt_obs_placeholder")
-
-        # self.segment_act_placeholder = tf.placeholder(
-        #     dtype=tf.float32, shape=(None, None) + self.act_shape, name="act_placeholder")
-        # self.segment_alt_act_placeholder = tf.placeholder(
-        #     dtype=tf.float32, shape=(None, None) + self.act_shape, name="alt_act_placeholder")
-
-
-        # A vanilla multi-layer perceptron maps a (state, action) pair to a reward (Q-value)
-
         q_value = self._predict_rewards(segment_obs, segment_act)
         alt_q_value = self._predict_rewards(segment_alt_obs, segment_alt_act)
 
@@ -117,26 +107,20 @@ class ComparisonRewardPredictor():
         data_loss = torch.nn.functional.cross_entropy(
             input=reward_logits, target=torch.tensor(labels).long()
         )
-        # data_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=reward_logits, labels=labels)
-
         loss = torch.mean(data_loss)
-
-        # global_step = tf.Variable(0, name='global_step', trainable=False)
-        # self.train_op = tf.train.AdamOptimizer().minimize(self.loss_op, global_step=global_step)
 
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
-        return loss
+
+        return loss.item()
 
     def predict_reward(self, path):
         """Predict the reward for each step in a given path"""
         with torch.no_grad():
-            q_value = self._predict_rewards(np.asarray([path["obs"]]),
-            np.asarray([path["actions"]]),
-            # training = False
-            )
+            q_value = self._predict_rewards(np.asarray([path["obs"]]), np.asarray([path["actions"]]))
             q_value = q_value.numpy()
+
         return q_value[0]
 
     def path_callback(self, path):
@@ -149,6 +133,7 @@ class ComparisonRewardPredictor():
         segment = sample_segment_from_path(path, int(self._frames_per_segment))
         if segment:
             self.recent_segments.append(segment)
+        print(f"{len(self.comparison_collector)} / {self.label_schedule.n_desired_labels} labels collected")
 
         # If we need more comparisons, then we build them from our recent segments
         if len(self.comparison_collector) < int(self.label_schedule.n_desired_labels):
@@ -173,7 +158,8 @@ class ComparisonRewardPredictor():
         labels = np.asarray([comp['label'] for comp in labeled_comparisons])
 
         # TODO check is loss should be scalar or tensor?
-        loss = self.train(segment_obs=left_obs, segment_act=left_acts, segment_alt_obs=right_obs, segment_alt_act=right_acts, labels=labels)
+        loss = self.train(segment_obs=left_obs, segment_act=left_acts, segment_alt_obs=right_obs,
+                          segment_alt_act=right_acts, labels=labels)
         self._elapsed_predictor_training_iters += 1
         self._write_training_summaries(loss)
 
@@ -198,6 +184,7 @@ class ComparisonRewardPredictor():
         self.agent_logger.log_simple(
             "labels/labeled_comparisons", len(self.comparison_collector.labeled_decisive_comparisons))
 
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
@@ -214,16 +201,18 @@ def main():
     parser.add_argument('-V', '--no_videos', action="store_true")
     args = parser.parse_args()
 
+    name = f"{args.name}_{datetime.now().strftime('%m_%d_%y_%H_%M_%S')}"
+
     print("Setting things up...")
 
     env_id = args.env_id
-    run_name = "%s/%s-%s" % (env_id, args.name, int(time()))
+    run_name = "%s/%s-%s" % (env_id, name, int(time()))
     summary_writer = make_summary_writer(run_name)
 
     env = make_with_torque_removed(env_id)
 
     num_timesteps = int(args.num_timesteps)
-    experiment_name = slugify(args.name)
+    experiment_name = slugify(name)
 
     if args.predictor == "rl":
         predictor = TraditionalRLRewardPredictor(summary_writer)
@@ -246,7 +235,7 @@ def main():
             comparison_collector = SyntheticComparisonCollector()
 
         elif args.predictor == "human":
-            bucket = os.environ.get('RL_TEACHER_GCS_BUCKET')
+            # bucket = os.environ.get('RL_TEACHER_GCS_BUCKET')
             # assert bucket and bucket.startswith("gs://"), "env variable RL_TEACHER_GCS_BUCKET must start with gs://"
             comparison_collector = HumanComparisonCollector(env_id, experiment_name=experiment_name)
         else:
@@ -305,12 +294,14 @@ def main():
         )
     elif args.agent == "pposgd_mpi":
         raise NotImplementedError()
+
         def make_env():
             return make_with_torque_removed(env_id)
 
         # train_pposgd_mpi(make_env, num_timesteps=num_timesteps, seed=args.seed, predictor=predictor)
     else:
         raise ValueError("%s is not a valid choice for args.agent" % args.agent)
+
 
 if __name__ == '__main__':
     main()

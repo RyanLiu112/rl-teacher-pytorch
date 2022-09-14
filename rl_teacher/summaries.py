@@ -7,12 +7,15 @@ from torch.utils.tensorboard import SummaryWriter
 
 CLIP_LENGTH = 1.5
 
+
 def make_summary_writer(name):
-    logs_path = osp.expanduser('~/tb/rl-teacher/%s' % (name))
+    logs_path = osp.expanduser('./tb/rl-teacher/%s' % (name))
     return SummaryWriter(logs_path)
 
+
 def add_simple_summary(summary_writer, tag, simple_value, step):
-    summary_writer.add_scalar(tag, simple_value,step)
+    summary_writer.add_scalar(tag, simple_value, step)
+
 
 def _pad_with_end_state(path, desired_length):
     # Assume path length is at least 1.
@@ -23,6 +26,7 @@ def _pad_with_end_state(path, desired_length):
         # Casting path[k] as a list is necessary to avoid issues with concatinating numpy arrays.
         path[k] = list(path[k]) + [path[k][-1] for _ in range(desired_length - len(path[k]))]
     return path
+
 
 class AgentLogger(object):
     """Tracks the performance of an arbitrary agent"""
@@ -55,9 +59,9 @@ class AgentLogger(object):
 
         if self._timesteps_since_last_training >= self.timesteps_per_summary:
             self.summary_step += 1
-            if 'new' in path: # PPO puts multiple episodes into one path
+            if 'new' in path:  # PPO puts multiple episodes into one path
                 last_n_episode_scores = [np.sum(path["original_rewards"]).astype(float) / np.sum(path["new"])
-                    for path in self.last_n_paths]
+                                         for path in self.last_n_paths]
             else:
                 last_n_episode_scores = [np.sum(path["original_rewards"]).astype(float) for path in self.last_n_paths]
 

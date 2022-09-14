@@ -5,11 +5,11 @@ import numpy as np
 import scipy.signal
 import torch
 
+
 # KL divergence with itself, holding first argument fixed
 def gauss_selfKL_firstfixed(mu, logstd):
     # mu1, logstd1 = map(tf.stop_gradient, [mu, logstd])
-    mu1 = mu.detach()
-    logstd1 = logstd.detach()
+    mu1, logstd1 = mu.detach(), logstd.detach()
     mu2, logstd2 = mu, logstd
 
     return gauss_KL(mu1, logstd1, mu2, logstd2)
@@ -76,7 +76,7 @@ class FilterOb:
     def __call__(self, obs):
         self.m1 = self.m1 * (self.n / (self.n + 1)) + obs * 1 / (1 + self.n)
         self.v = self.v * (self.n / (self.n + 1)) + (obs - self.m1) ** 2 * 1 / (1 + self.n)
-        self.std = (self.v + 1e-6)**.5  # std
+        self.std = (self.v + 1e-6) ** .5  # std
         self.n += 1
         if self.filter_mean:
             o1 = (obs - self.m1) / self.std
@@ -111,7 +111,6 @@ def conjugate_gradient(f_Ax, b, cg_iters=10, residual_tol=1e-10):
         if rdotr < residual_tol:
             break
     return x
-
 
 # def make_network(network_name, input_layer, hidden_size, action_size):
 #     with tf.variable_scope(network_name):

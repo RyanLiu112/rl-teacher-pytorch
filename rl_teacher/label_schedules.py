@@ -1,5 +1,6 @@
 from time import time
 
+
 class LabelAnnealer(object):
     """Keeps track of how many labels we want to collect"""
 
@@ -16,6 +17,7 @@ class LabelAnnealer(object):
         pretrain_frac = self._pretrain_labels / self._final_labels
         desired_frac = pretrain_frac + (1 - pretrain_frac) * (1 - exp_decay_frac)  # Start with 0.25 and anneal to 0.99
         return desired_frac * self._final_labels
+
 
 class ConstantLabelSchedule(object):
     def __init__(self, pretrain_labels, seconds_between_labels=3.0):

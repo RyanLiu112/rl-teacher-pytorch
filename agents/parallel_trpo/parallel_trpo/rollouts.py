@@ -8,6 +8,7 @@ import torch.nn as nn
 
 from agents.parallel_trpo.parallel_trpo.utils import filter_ob
 
+
 class Actor(multiprocess.Process):
     def __init__(self, task_q, result_q, env_id, make_env, seed, max_timesteps_per_episode):
         multiprocess.Process.__init__(self)
@@ -23,13 +24,13 @@ class Actor(multiprocess.Process):
         obs = torch.from_numpy(obs).float()
         avg_action_dist = self.net(obs)
         logstd_action_dist = torch.tile(self.logstd_action_dist_param, [avg_action_dist.shape[0], 1])
-    
+
         return avg_action_dist, logstd_action_dist
 
     # TODO is this required?
     # TODO Cleanup
     def set_policy(self, weights):
-        for i,var in enumerate(self.policy_vars):
+        for i, var in enumerate(self.policy_vars):
             var.data.copy_(weights[i])
 
     def act(self, obs):
@@ -112,6 +113,7 @@ class Actor(multiprocess.Process):
                     "human_obs": np.array(human_obs)}
                 return path
 
+
 class ParallelRollout(object):
     def __init__(self, env_id, make_env, reward_predictor, num_workers, max_timesteps_per_episode, seed):
         self.num_workers = num_workers
@@ -123,7 +125,8 @@ class ParallelRollout(object):
         self.actors = []
         for i in range(self.num_workers):
             new_seed = seed * 1000 + i  # Give each actor a uniquely seeded env
-            self.actors.append(Actor(self.tasks_q, self.results_q, env_id, make_env, new_seed, max_timesteps_per_episode))
+            self.actors.append(
+                Actor(self.tasks_q, self.results_q, env_id, make_env, new_seed, max_timesteps_per_episode))
 
         for a in self.actors:
             a.start()

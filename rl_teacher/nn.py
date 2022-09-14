@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 class FullyConnectedMLP(object):
     """Vanilla two hidden layer multi-layer perceptron"""
 

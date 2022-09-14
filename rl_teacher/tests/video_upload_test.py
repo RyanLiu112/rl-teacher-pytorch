@@ -4,6 +4,7 @@ import os.path as osp
 from rl_teacher.tests.video_render_test import TEST_RENDER_DIR
 from rl_teacher.video import upload_to_gcs
 
+
 def test_upload():
     bucket = os.environ.get('RL_TEACHER_GCS_BUCKET')
     assert bucket and bucket.startswith("gs://"), "env variable RL_TEACHER_GCS_BUCKET must be set and start with gs://"
