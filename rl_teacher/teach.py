@@ -143,10 +143,10 @@ class ComparisonRewardPredictor():
 
         # Train our predictor every X steps
         if self._steps_since_last_training >= int(self._n_timesteps_per_predictor_training):
-            self.train_predictor()
+            self.train_predictor(flag=True)
             self._steps_since_last_training -= self._steps_since_last_training
 
-    def train_predictor(self):
+    def train_predictor(self, flag=True):
         self.comparison_collector.label_unlabeled_comparisons()
 
         minibatch_size = min(64, len(self.comparison_collector.labeled_decisive_comparisons))
@@ -162,6 +162,9 @@ class ComparisonRewardPredictor():
                           segment_alt_act=right_acts, labels=labels)
         self._elapsed_predictor_training_iters += 1
         self._write_training_summaries(loss)
+
+        if flag:
+            torch.save(self.mlp.parameters, './checkpoints/{:03d}.pth'.format(self._elapsed_predictor_training_iters))
 
     def _write_training_summaries(self, loss):
         self.agent_logger.log_simple("predictor/loss", loss)
@@ -268,7 +271,7 @@ def main():
 
         # Start the actual training
         for i in range(args.pretrain_iters):
-            predictor.train_predictor()  # Train on pretraining labels
+            predictor.train_predictor(flag=False)  # Train on pretraining labels
             if i % 100 == 0:
                 print("%s/%s predictor pretraining iters... " % (i, args.pretrain_iters))
 
